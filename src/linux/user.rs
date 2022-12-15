@@ -5,7 +5,7 @@ use crate::TAResult;
 use ssh2::Session;
 use std::io::Read;
 use std::net::TcpStream;
-struct Linux {
+pub struct Linux {
     username: String,
     password: String,
     hostname: String,
@@ -13,7 +13,7 @@ struct Linux {
 }
 
 impl Linux {
-    fn new(username: &str, password: &str, hostname: &str, port: u32) -> Self {
+    pub fn new(username: &str, password: &str, hostname: &str, port: u32) -> Self {
         Self {
             username: username.to_string(),
             password: password.to_string(),
@@ -22,7 +22,7 @@ impl Linux {
         }
     }
 
-    fn create_session(&self) -> TAResult<LinuxSession> {
+    pub fn create_session(&self) -> TAResult<LinuxSession> {
         let mut session = ssh2::Session::new()?;
         let tcp = TcpStream::connect(format!("{}:{}", self.hostname, self.port))?;
         session.set_tcp_stream(tcp);
@@ -33,7 +33,7 @@ impl Linux {
     }
 }
 
-struct LinuxSession(Session);
+pub struct LinuxSession(Session);
 
 impl LinuxSession {
     fn check_connection(&mut self) -> TAResult<bool> {
