@@ -23,8 +23,8 @@ impl TAUser {
 
 #[derive(Debug)]
 pub enum UserError {
-    AlreadyExists(TAUser),
-    Other(TAUser),
+    AlreadyExists(TAUser, String),
+    Other(TAUser, String),
 }
 
 pub trait User {

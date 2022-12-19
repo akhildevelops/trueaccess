@@ -1,4 +1,6 @@
-use bollard::{container, image, Docker};
+use std::{collections::HashMap, thread, time};
+
+use bollard::{container, image, models, Docker};
 use futures::future;
 use futures_util::stream::StreamExt;
 use rstest::*;
@@ -14,6 +16,7 @@ const PASSWORD: &str = "test";
 const PORT: u32 = 22;
 const DOCKERIMAGE: &str = "talinux";
 const DOCKERCONTAINER: &str = "talinux_cont";
+const DOCKER22PORTBINDING: u32 = 4567;
 const DOCKERFILEPATH: &str =
     "https://raw.githubusercontent.com/akhildevelops/AdventofCode2022/temp/Dockerfile";
 macro_rules! rt_exec {
@@ -28,20 +31,30 @@ pub fn docker_linux(docker_client: Docker) -> Linux {
     let info = docker_client.inspect_container(DOCKERCONTAINER, None);
     let info = rt_exec!(info);
     if let Ok(list) = info {
-        let settings = list.network_settings.unwrap().networks.unwrap();
-        let hostname = &settings.get("bridge").unwrap().ip_address;
-        if let Some(x) = hostname {
-            Linux::new(USERNAME, PASSWORD, x, PORT)
+        if list.state.unwrap().running.unwrap() {
+            Linux::new(USERNAME, PASSWORD, "localhost", DOCKER22PORTBINDING)
         } else {
-            panic!()
+            rt_exec!(docker_client.restart_container(DOCKERCONTAINER, None)).unwrap();
+            docker_linux(docker_client)
         }
     } else {
         if let Err(_) = rt_exec!(docker_client.start_container::<String>(DOCKERCONTAINER, None)) {
+            let p_b = models::PortBinding {
+                host_ip: Some("0.0.0.0".to_string()),
+                host_port: Some(DOCKER22PORTBINDING.to_string()),
+            };
+            let mut p_m = HashMap::new();
+            p_m.insert("22/tcp".to_string(), Some(vec![p_b]));
             let c_options = container::CreateContainerOptions {
                 name: DOCKERCONTAINER,
             };
+            let host_config = models::HostConfig {
+                port_bindings: Some(p_m),
+                ..Default::default()
+            };
             let c_config = container::Config {
                 image: Some(DOCKERIMAGE),
+                host_config: Some(host_config),
                 ..Default::default()
             };
             if let Err(_) = rt_exec!(docker_client.create_container(Some(c_options), c_config)) {
@@ -60,13 +73,9 @@ pub fn docker_linux(docker_client: Docker) -> Linux {
                             future::ready(())
                         })
                         .await
-                    // println!("{:?}", x);
                 })
             }
         }
         docker_linux(docker_client)
     }
 }
-// impl Termination for Linux {
-//     fn report(self) -> std::process::ExitCode {}
-// }

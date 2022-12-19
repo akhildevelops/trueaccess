@@ -8,6 +8,6 @@ fn check_connection(docker_linux: Linux) {
     docker_linux
         .create_session()
         .unwrap()
-        .create_user("dumm23", "asdf")
+        .create_user("dumm27", "asdf")
         .unwrap();
 }

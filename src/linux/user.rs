@@ -56,7 +56,7 @@ impl User for LinuxSession {
     fn create_user(&self, username: &str, password: &str) -> TAResult<TAUser> {
         let user = TAUser::new(username, password);
         let mut channel = self.0.channel_session()?;
-        let user_add = format!("{} {}", utils::USER_ADD, username);
+        let user_add = format!("sudo -S {} {}", utils::USER_ADD, username);
         // let change_passwd = format!("passwd {}", username);
         // channel.shell();
         channel.exec(&user_add)?;
@@ -75,11 +75,14 @@ impl User for LinuxSession {
         channel.exit_status()?;
 
         if utils::user_exist_from_response(&response, Some(&user)) {
-            Err(TAError::UserError(UserError::AlreadyExists(user)))
+            Err(TAError::UserError(UserError::AlreadyExists(
+                user,
+                "User already Exists".to_string(),
+            )))
         } else if self.check_user(&user)? {
             Ok(user)
         } else {
-            Err(TAError::UserError(UserError::Other(user)))
+            Err(TAError::UserError(UserError::Other(user, response)))
         }
 
         // channel.exec(&change_passwd)?;
