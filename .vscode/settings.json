@@ -1,0 +1,12 @@
+{
+    "python.formatting.provider": "black",
+    "python.analysis.ignore": [
+        "*"
+    ],
+    "editor.formatOnSave": true,
+    "python.testing.pytestArgs": [
+        "test"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}

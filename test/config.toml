@@ -1,0 +1,5 @@
+[docker.linux]
+dir_context = "test/docker"
+file_name = "linuxDockerfile"
+image_name = "talinux"
+container_name = "talinux_container"
