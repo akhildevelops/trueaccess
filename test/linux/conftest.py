@@ -2,6 +2,7 @@ from ..utils import config
 import pytest
 
 from docker import DockerClient, errors as dockererrors
+from docker.models.containers import Container
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -23,11 +24,31 @@ def conftest_build_linux(
 @pytest.fixture(scope="module")
 def conftest_run_container(
     conftest_docker_client: DockerClient, conftest_config: config.Config
-) -> bool:
+) -> Container:
     linux = conftest_config.docker.linux
     try:
-        conftest_docker_client.containers.get(linux.container_name)
+        container = conftest_docker_client.containers.get(linux.container_name)
     except dockererrors.NotFound:
-        conftest_docker_client.containers.run(
-            linux.image_name, name=linux.container_name, detach=True
+        container = conftest_docker_client.containers.run(
+            linux.image_name,
+            name=linux.container_name,
+            detach=True,
         )
+    if container.status == "exited":
+        container.start()
+    yield container
+    container.remove()
+
+
+@pytest.fixture(scope="module")
+def conftest_container_ip_address(
+    conftest_docker_client: DockerClient,
+    conftest_config: config.Config,
+    conftest_run_container: Container,
+) -> str:
+    linux_config = conftest_config.docker.linux
+    inspect_logs = conftest_docker_client.api.inspect_container(
+        linux_config.container_name
+    )
+    ip_address = inspect_logs["NetworkSettings"]["IPAddress"]
+    return ip_address

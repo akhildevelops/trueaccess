@@ -3,3 +3,9 @@ dir_context = "test/docker"
 file_name = "linuxDockerfile"
 image_name = "talinux"
 container_name = "talinux_container"
+[docker.linux.master]
+username = "tamaster"
+password = "tapassword"
+[docker.linux.user]
+username = "tatest"
+password = "tatest"
